@@ -67,6 +67,8 @@ final class ArenaManager {
     a.startedAt = c.getLong("started-at");
     a.running = c.getBoolean("running") && a.startedAt > 0;
     a.announcedStage = c.getInt("announced-stage", 0);
+    a.damageAfterRespawn = c.getBoolean("damage-after-respawn");
+    a.centerBeam = c.getBoolean("center-beam");
     for (String uuid : c.getStringList("eliminated-players")) {
       try {
         a.eliminated.add(UUID.fromString(uuid));
@@ -138,6 +140,8 @@ final class ArenaManager {
       c.set("running", a.running);
       c.set("started-at", a.startedAt);
       c.set("announced-stage", a.announcedStage);
+      c.set("damage-after-respawn", a.damageAfterRespawn);
+      c.set("center-beam", a.centerBeam);
       c.set("selection-boundary.enabled", a.bounded);
       c.set("selection-boundary.min-x", a.minX);
       c.set("selection-boundary.max-x", a.maxX);
@@ -171,8 +175,6 @@ final class ArenaManager {
   }
 
   void stop(Arena a) {
-    a.start = a.radius(System.currentTimeMillis());
-    a.minimum = Math.min(a.minimum, a.start);
     a.running = false;
     persist();
   }
@@ -199,7 +201,7 @@ final class ArenaManager {
       a.lastDamage = now;
       double radius = a.radius(now);
       for (Player p : world.getPlayers()) {
-        if (a.eliminated.contains(p.getUniqueId())
+        if ((!a.damageAfterRespawn && a.eliminated.contains(p.getUniqueId()))
             || p.isDead()
             || p.getHealth() <= 0
             || p.getGameMode() == GameMode.SPECTATOR) continue;

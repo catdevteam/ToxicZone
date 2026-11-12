@@ -14,6 +14,7 @@ final class Arena {
   boolean bounded, running;
   int announcedStage;
   long lastDamage;
+  boolean damageAfterRespawn, centerBeam;
   final Set<UUID> eliminated = new HashSet<>();
 
   Arena(String id) {

@@ -205,3 +205,16 @@ gui-delete-confirm.lore:
   - "&c點選後永久移除此場地。"
 
 wand-wrong-arena: "&c這支區域選取釣竿屬於場地 {wand-arena}，無法用於目前的場地 {arena}。請在新場地重新領取釣竿。"
+
+toggle-on: "&a開啟"
+toggle-off: "&c關閉"
+gui-respawn-damage.name: "&e復活後扣血"
+gui-respawn-damage.lore:
+  - "&7目前 {state}"
+  - "&7開啟後，復活玩家在傷害區會再扣血。"
+gui-center-beam.name: "&b中心光柱"
+gui-center-beam.lore:
+  - "&7目前 {state}"
+  - "&7在場地中心顯示青色粒子光柱。"
+respawn-damage-set: "&7復活後扣血已{state}&7。"
+center-beam-set: "&7中心光柱已{state}&7。"

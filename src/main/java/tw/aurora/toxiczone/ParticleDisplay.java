@@ -11,6 +11,7 @@ final class ParticleDisplay {
 
   private record Shape(
       boolean circle,
+      boolean centerBeam,
       double x,
       double z,
       double radius,
@@ -20,7 +21,7 @@ final class ParticleDisplay {
       double maxZ,
       List<View> views) {}
 
-  private record Point(UUID player, UUID world, double x, double y, double z) {}
+  private record Point(UUID player, UUID world, double x, double y, double z, boolean center) {}
 
   private record Settings(
       int points, int layers, double vertical, double distance, double spacing, float size) {}
@@ -90,6 +91,7 @@ final class ParticleDisplay {
       shapes.add(
           new Shape(
               a.running,
+              a.centerBeam,
               a.x,
               a.z,
               a.radius(System.currentTimeMillis()),
@@ -113,6 +115,8 @@ final class ParticleDisplay {
                           if (version != generation) return;
                           Particle.DustOptions dust =
                               new Particle.DustOptions(Color.fromRGB(70, 255, 90), settings.size);
+                          Particle.DustOptions beam =
+                              new Particle.DustOptions(Color.fromRGB(48, 220, 255), 2.5f);
                           for (Point point : points) {
                             Player player = Bukkit.getPlayer(point.player);
                             World world = Bukkit.getWorld(point.world);
@@ -131,7 +135,7 @@ final class ParticleDisplay {
                                 0,
                                 0,
                                 0,
-                                dust,
+                                point.center ? beam : dust,
                                 true);
                           }
                         });
@@ -143,6 +147,9 @@ final class ParticleDisplay {
 
   private static List<Point> plan(List<Shape> shapes, Settings s) {
     List<Point> points = new ArrayList<>();
+    for (Shape shape : shapes) {
+      if (shape.centerBeam) for (View view : shape.views) beam(points, shape, view, s.distance);
+    }
     for (Shape shape : shapes)
       for (View v : shape.views) {
         if (shape.circle) {
@@ -165,6 +172,16 @@ final class ParticleDisplay {
         }
       }
     return points;
+  }
+
+  private static void beam(List<Point> points, Shape shape, View viewer, double distance) {
+    double dx = shape.x - viewer.x, dz = shape.z - viewer.z;
+    if (dx * dx + dz * dz > distance * distance) return;
+    double bottom = Math.max(viewer.minY, Math.floor((viewer.y - 24) / 1.25) * 1.25);
+    double top = Math.min(viewer.maxY, viewer.y + 40);
+    for (double y = bottom; y < top && points.size() < 20000; y += 1.25) {
+      points.add(new Point(viewer.player, viewer.world, shape.x, y, shape.z, true));
+    }
   }
 
   private static void line(
@@ -194,7 +211,7 @@ final class ParticleDisplay {
     for (int layer = 0; layer < s.layers; layer++) {
       double y = base + layer * s.vertical;
       if (y >= v.maxY || points.size() >= 20000) break;
-      points.add(new Point(v.player, v.world, x, y, z));
+      points.add(new Point(v.player, v.world, x, y, z, false));
     }
   }
 }

@@ -74,7 +74,18 @@ final class ZoneMenus implements Listener {
         a.running ? Material.BARRIER : Material.LIME_CONCRETE,
         args);
     put(inv, 42, "gui-reload", Material.WRITABLE_BOOK, Map.of());
+    put(
+        inv,
+        38,
+        "gui-respawn-damage",
+        Material.TOTEM_OF_UNDYING,
+        toggleState(a.damageAfterRespawn));
+    put(inv, 44, "gui-center-beam", Material.BEACON, toggleState(a.centerBeam));
     player.openInventory(inv);
+  }
+
+  private Map<String, String> toggleState(boolean enabled) {
+    return Map.of("state", plugin.messages.text(enabled ? "toggle-on" : "toggle-off", Map.of()));
   }
 
   void list(Player player, int requested) {
@@ -194,6 +205,20 @@ final class ZoneMenus implements Listener {
       }
       case 36 -> {
         confirmDelete(p, a);
+        return;
+      }
+      case 38 -> {
+        a.damageAfterRespawn = !a.damageAfterRespawn;
+        plugin.arenas.persist();
+        plugin.messages.send(p, "respawn-damage-set", toggleState(a.damageAfterRespawn));
+        settings(p, a);
+        return;
+      }
+      case 44 -> {
+        a.centerBeam = !a.centerBeam;
+        plugin.arenas.persist();
+        plugin.messages.send(p, "center-beam-set", toggleState(a.centerBeam));
+        settings(p, a);
         return;
       }
       case 42 -> {

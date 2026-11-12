@@ -310,4 +310,67 @@ class ArenaRegressionTest {
     verify(plugin.messages).send(player, "selection-first-needed");
     verify(plugin.files, never()).save(any());
   }
+
+  @Test
+  void stoppingAtFinalRadiusPreservesConfiguredStartForNextRound() {
+    Arena a = arena("default", 0);
+    a.start = 200;
+    a.running = true;
+    a.startedAt = System.currentTimeMillis() - 700000;
+    assertEquals(5, a.radius(System.currentTimeMillis()));
+
+    manager.stop(a);
+    assertEquals(200, a.start);
+    assertEquals(5, a.minimum);
+    manager.load();
+    Arena restored = manager.arenas.get("default");
+    assertEquals("started", manager.start(restored));
+    assertEquals(200, restored.radius(restored.startedAt));
+  }
+
+  @Test
+  void respawnOptionRestoresDamageOnlyOncePlayerIsAlive() {
+    Arena a = arena("default", 0);
+    a.running = true;
+    a.startedAt = System.currentTimeMillis() - 700000;
+    World world = mock(World.class);
+    Player player = mock(Player.class);
+    when(world.getName()).thenReturn("world");
+    when(world.getPlayers()).thenReturn(List.of(player));
+    when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+    when(player.getHealth()).thenReturn(20.0);
+    when(player.getGameMode()).thenReturn(GameMode.SURVIVAL);
+    when(player.getLocation()).thenReturn(new Location(world, 50, 64, 0));
+    manager.died(player);
+
+    try (var bukkit = mockStatic(Bukkit.class)) {
+      bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+      manager.tick();
+      verify(player, never()).damage(anyDouble());
+      a.damageAfterRespawn = true;
+      a.lastDamage = 0;
+      when(player.isDead()).thenReturn(true);
+      manager.tick();
+      verify(player, never()).damage(anyDouble());
+      a.lastDamage = 0;
+      when(player.isDead()).thenReturn(false);
+      manager.tick();
+      verify(player).damage(3);
+    }
+  }
+
+  @Test
+  void optionsAreSavedSeparatelyForEachArena() {
+    Arena a = arena("default", 0);
+    arena("other", 500);
+    a.damageAfterRespawn = true;
+    a.centerBeam = true;
+    manager.persist();
+    manager.load();
+
+    assertTrue(manager.arenas.get("default").damageAfterRespawn);
+    assertTrue(manager.arenas.get("default").centerBeam);
+    assertFalse(manager.arenas.get("other").damageAfterRespawn);
+    assertFalse(manager.arenas.get("other").centerBeam);
+  }
 }

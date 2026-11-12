@@ -21,6 +21,8 @@ arena:
   minimum-radius: 5.0
   shrink-duration-seconds: 1800
   running: false
+  damage-after-respawn: false
+  center-beam: false
   eliminated-players: []
   selection-boundary:
     enabled: false
